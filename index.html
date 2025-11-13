@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CA Final Study Tracker</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Inter font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Apply Inter font */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        /* Custom scrollbar for modal */
+        .modal-content::-webkit-scrollbar {
+            width: 8px;
+        }
+        .modal-content::-webkit-scrollbar-track {
+            background: #2d3748; /* bg-gray-800 */
+        }
+        .modal-content::-webkit-scrollbar-thumb {
+            background: #4a5568; /* bg-gray-600 */
+            border-radius: 4px;
+        }
+        .modal-content::-webkit-scrollbar-thumb:hover {
+            background: #718096; /* bg-gray-500 */
+        }
+
+        /* Hide the modal by default */
+        #subjectModal {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white antialiased min-h-screen p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto">
+        
+        <!-- Header -->
+        <header class="mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-center text-blue-400">CA Final Study Tracker</h1>
+            <p class="text-center text-gray-400 text-lg mt-2">Track your progress for the New Scheme syllabus.</p>
+        </header>
+
+        <!-- Overall Progress Summary -->
+        <div class="bg-gray-800 rounded-xl shadow-2xl p-6 mb-8">
+            <h2 class="text-2xl font-semibold mb-4">Overall Progress Summary</h2>
+            <div class="w-full bg-gray-700 rounded-full h-8 overflow-hidden">
+                <div id="overallProgressBar" class="bg-gradient-to-r from-blue-500 to-green-500 h-8 text-center text-sm font-medium text-white leading-8 transition-all duration-500" style="width: 0%">0%</div>
+            </div>
+        </div>
+
+        <!-- Subject Progress Grid -->
+        <main id="subjectGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Subject cards will be dynamically inserted here by JavaScript -->
+        </main>
+
+    </div>
+
+    <!-- Subject Detail Modal -->
+    <div id="subjectModal" class="fixed inset-0 bg-black bg-opacity-75 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-gray-800 rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden">
+            <!-- Modal Header -->
+            <div class="border-b border-gray-700 p-6">
+                <div class="flex justify-between items-center">
+                    <h3 id="modalSubjectName" class="text-2xl font-semibold"></h3>
+                    <button id="closeModalBtn" class="text-gray-400 hover:text-white transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Modal Content -->
+            <div id="modalContent" class="p-6 max-h-[70vh] overflow-y-auto modal-content">
+                <!-- Target Date Section -->
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 p-4 bg-gray-900 rounded-lg">
+                    <label for="targetDate" class="text-lg font-medium text-blue-300">Target Date:</label>
+                    <input type="date" id="targetDateInput" class="bg-gray-700 border border-gray-600 text-white rounded-md p-2 w-full sm:w-auto focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                </div>
+
+                <!-- Chapters List -->
+                <h4 class="text-xl font-semibold mb-4">Chapters / Topics</h4>
+                <div id="chapterList" class="space-y-3">
+                    <!-- Chapter items will be dynamically inserted here -->
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="bg-gray-800 border-t border-gray-700 p-6 text-right">
+                <button id="modalSaveBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-all shadow-md">
+                    Save & Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // Main Application Logic
+        document.addEventListener('DOMContentLoaded', () => {
+            const app = {
+                // --- 1. DATA ---
+                // This is the single source of truth for the syllabus.
+                subjectsData: [
+                    {
+                        id: 1,
+                        name: "Paper 1: Financial Reporting",
+                        targetDate: "",
+                        progress: 0,
+                        chapters: [
+                            { id: 101, name: "Conceptual Framework, Ind AS 1, 34, 7", completed: false },
+                            { id: 102, name: "Ind AS 115 (Revenue)", completed: false },
+                            { id: 103, name: "Ind AS 116 (Leases)", completed: false },
+                            { id: 104, name: "Ind AS 102 (Share-based Payment)", completed: false },
+                            { id: 105, name: "Ind AS 19 (Employee Benefits)", completed: false },
+                            { id: 106, name: "Ind AS 16 (PPE) & 23 (Borrowing Costs)", completed: false },
+                            { id: 107, name: "Ind AS 36 (Impairment), 38 (Intangible), 40 (Investment Property)", completed: false },
+                            { id: 108, name: "Ind AS 105 (Held for Sale)", completed: false },
+                            { id: 109, name: "Ind AS 12 (Income Taxes)", completed: false },
+                            { id: 110, name: "Ind AS 21 (Foreign Exchange)", completed: false },
+                            { id: 111, name: "Ind AS 37 (Provisions) & 10 (Events)", completed: false },
+                            { id: 112, name: "Financial Instruments (Ind AS 32, 109, 107)", completed: false },
+                            { id: 113, name: "Business Combinations (Ind AS 103)", completed: false },
+                            { id: 114, name: "Consolidated Financial Statements (Ind AS 110, 111, 28, 27)", completed: false },
+                            { id: 115, name: "Ind AS 101 (First-time Adoption)", completed: false },
+                            { id: 116, name: "Other Standards (24, 33, 108, 20, 8)", completed: false },
+                            { id: 117, name: "Corporate Re-organisation & NBFCs", completed: false },
+                            { id: 118, name: "CSR Reporting", completed: false },
+                        ]
+                    },
+                    {
+                        id: 2,
+                        name: "Paper 2: Advanced Financial Management",
+                        targetDate: "",
+                        progress: 0,
+                        chapters: [
+                            { id: 201, name: "Financial Policy & Corporate Strategy", completed: false },
+                            { id: 202, name: "Advanced Capital Budgeting", completed: false },
+                            { id: 203, name: "Security Analysis", completed: false },
+                            { id: 204, name: "Security Valuation", completed: false },
+                            { id: 205, name: "Portfolio Management", completed: false },
+                            { id: 206, name: "Securitization", completed: false },
+                            { id: 207, name: "Mutual Funds", completed: false },
+                            { id: 208, name: "Derivatives Analysis & Valuation", completed: false },
+                            { id: 209, name: "Foreign Exchange Risk Management", completed: false },
+                            { id: 210, name: "International Financial Management", completed: false },
+                            { id: 211, name: "Interest Rate Risk Management", completed: false },
+                            { id: 212, name: "Business Valuation", completed: false },
+                            { id: 213, name: "Mergers, Acquisitions & Restructuring", completed: false },
+                            { id: 214, name: "Startup Finance", completed: false },
+                        ]
+                    },
+                    {
+                        id: 3,
+                        name: "Paper 3: Advanced Auditing, Assurance",
+                        targetDate: "",
+                        progress: 0,
+                        chapters: [
+                            { id: 301, name: "Standards on Auditing (SAs), Statements", completed: false },
+                            { id: 302, name: "Audit Planning, Strategy & Execution", completed: false },
+                            { id: 303, name: "Risk Assessment & Internal Control", completed: false },
+                            { id: 304, name: "Audit Reports", completed: false },
+                            { id: 305, name: "Group Audits (Consolidated FS)", completed: false },
+                            { id: 306, name: "Audit of Banks, Insurance & NBFCs", completed: false },
+                            { id: 307, name: "Audit of PSUs", completed: false },
+                            { id: 308, name: "Internal, Management & Operational Audit", completed: false },
+                            { id: 309, name: "Due Diligence, Investigation & Forensic", completed: false },
+                            { id: 310, name: "Automated Environment & Digital Auditing", completed: false },
+                            { id: 311, name: "Audit of LLPs", completed: false },
+                            { id: 312, name: "Peer Review & Quality Review", completed: false },
+                            { id: 313, name: "ESG & SDG Assurance", completed: false },
+                            { id: 314, name: "Professional Ethics & Liabilities", completed: false },
+                        ]
+                    },
+                    {
+                        id: 4,
+                        name: "Paper 4: Direct Tax & International Tax",
+                        targetDate: "",
+                        progress: 0,
+                        chapters: [
+                            { id: 401, name: "DT: Basic Concepts & Assessment of Entities", completed: false },
+                            { id: 402, name: "DT: Tax Planning, Avoidance & GAAR", completed: false },
+                            { id: 403, name: "DT: TDS, TCS, Advance Tax", completed: false },
+                            { id: 404, name: "DT: Assessment, Appeals, Revision", completed: false },
+                            { id: 405, name: "DT: Dispute Resolution & Miscellaneous", completed: false },
+                            { id: 406, name: "IT: Transfer Pricing", completed: false },
+                            { id: 407, name: "IT: Non-Resident Taxation", completed: false },
+                            { id: 408, name: "IT: Double Taxation Relief (DTAA)", completed: false },
+                            { id: 409, name: "IT: Advance Rulings", completed: false },
+                            { id: 410, name: "IT: Equalisation Levy", completed: false },
+                            { id: 411, name: "IT: Tax Treaties & BEPS", completed: false },
+                            { id: 412, name: "IT: Model Tax Conventions", completed: false },
+                        ]
+                    },
+                    {
+                        id: 5,
+                        name: "Paper 5: Indirect Tax Laws",
+                        targetDate: "",
+                        progress: 0,
+                        chapters: [
+                            { id: 501, name: "GST: Supply & Charge (inc. RCM)", completed: false },
+                            { id: 502, name: "GST: Place of Supply", completed: false },
+                            { id: 503, name: "GST: Time & Value of Supply", completed: false },
+                            { id: 504, name: "GST: Input Tax Credit (ITC)", completed: false },
+                            { id: 505, name: "GST: Registration & Tax Invoice", completed: false },
+                            { id: 506, name: "GST: Accounts, Records, E-Way Bills", completed: false },
+                            { id: 507, name: "GST: Payment, Returns, Refunds", completed: false },
+                            { id: 508, name: "GST: Import, Export & Job Work", completed: false },
+                            { id: 509, name: "GST: Assessment & Audit", completed: false },
+                            { id: 510, name: "GST: Inspection, Search, Seizure", completed: false },
+                            { id: 511, name: "GST: Demands, Recovery, Offences", completed: false },
+                            { id: 512, name: "GST: Appeals, Revision, Advance Ruling", completed: false },
+                            { id: 513, name: "Customs: Levy, Exemptions, Types of Duty", completed: false },
+                            { id: 514, name: "Customs: Classification & Valuation", completed: false },
+                            { id: 515, name: "Customs: Importation, Exportation, Warehousing", completed: false },
+                            { id: 516, name: "Customs: Drawback & Refund", completed: false },
+                            { id: 517, name: "Foreign Trade Policy (FTP)", completed: false },
+                        ]
+                    },
+                    {
+                        id: 6,
+                        name: "Paper 6: Integrated Business Solutions",
+                        targetDate: "",
+                        progress: 0,
+                        chapters: [
+                            { id: 601, name: "Case Study Practice (FR Focus)", completed: false },
+                            { id: 602, name: "Case Study Practice (AFM Focus)", completed: false },
+                            { id: 603, name: "Case Study Practice (Audit Focus)", completed: false },
+                            { id: 604, name: "Case Study Practice (Direct Tax Focus)", completed: false },
+                            { id: 605, name: "Case Study Practice (IDT Focus)", completed: false },
+                            { id: 606, name: "Case Study Practice (Strategic Mgt Focus)", completed: false },
+                            { id: 607, name: "Case Study Practice (Corporate Law Focus)", completed: false },
+                            { id: 608, name: "Full-Length Multidisciplinary Case 1", completed: false },
+                            { id: 609, name: "Full-Length Multidisciplinary Case 2", completed: false },
+                            { id: 610, name: "Full-Length Multidisciplinary Case 3", completed: false },
+                        ]
+                    }
+                ],
+
+                // --- 2. STATE ---
+                currentData: [], // This will hold the data loaded from localStorage or default
+                currentSubjectId: null, // Track which subject is open in the modal
+
+                // --- 3. UI ELEMENTS ---
+                subjectGrid: document.getElementById('subjectGrid'),
+                overallProgressBar: document.getElementById('overallProgressBar'),
+                modal: document.getElementById('subjectModal'),
+                modalSubjectName: document.getElementById('modalSubjectName'),
+                chapterList: document.getElementById('chapterList'),
+                targetDateInput: document.getElementById('targetDateInput'),
+                closeModalBtn: document.getElementById('closeModalBtn'),
+                modalSaveBtn: document.getElementById('modalSaveBtn'),
+
+
+                // --- 4. METHODS ---
+
+                /**
+                 * Initializes the application.
+                 * Loads data, calculates progress, and renders the dashboard.
+                 */
+                init() {
+                    this.loadData();
+                    this.subjectsData.forEach(subject => {
+                        this.calculateSubjectProgress(subject);
+                    });
+                    this.renderDashboard();
+                    this.addEventListeners();
+                },
+
+                /**
+                 * Adds all necessary event listeners.
+                 */
+                addEventListeners() {
+                    // Listener for opening the modal (event delegation)
+                    this.subjectGrid.addEventListener('click', (e) => {
+                        const card = e.target.closest('.subject-card');
+                        if (card && card.dataset.id) {
+                            this.openModal(parseInt(card.dataset.id, 10));
+                        }
+                    });
+
+                    // Listeners for modal buttons
+                    this.closeModalBtn.addEventListener('click', () => this.closeModal());
+                    this.modalSaveBtn.addEventListener('click', () => this.saveAndCloseModal());
+
+                    // Listener for chapter checkboxes (event delegation)
+                    this.chapterList.addEventListener('change', (e) => {
+                        if (e.target.type === 'checkbox') {
+                            const chapterId = parseInt(e.target.dataset.chapterId, 10);
+                            this.toggleChapterStatus(chapterId);
+                        }
+                    });
+                },
+
+                /**
+                 * Loads data from localStorage or uses default data.
+                 */
+                loadData() {
+                    const savedData = localStorage.getItem('caFinalTrackerData');
+                    if (savedData) {
+                        this.subjectsData = JSON.parse(savedData);
+                    }
+                    // We always have the default structure, so no need to copy
+                },
+
+                /**
+                 * Saves the current subjectsData to localStorage.
+                 */
+                saveData() {
+                    localStorage.setItem('caFinalTrackerData', JSON.stringify(this.subjectsData));
+                },
+
+                /**
+                 * Renders the main dashboard: overall progress and subject cards.
+                 */
+                renderDashboard() {
+                    this.subjectGrid.innerHTML = '';
+                    let totalProgress = 0;
+
+                    this.subjectsData.forEach(subject => {
+                        this.calculateSubjectProgress(subject); // Recalculate progress
+                        totalProgress += subject.progress;
+
+                        const targetDateStr = subject.targetDate 
+                            ? `<p class="text-sm text-blue-300 mt-2">Target: ${this.formatDate(subject.targetDate)}</p>` 
+                            : `<p class="text-sm text-gray-500 mt-2">No target date set</p>`;
+
+                        const cardHtml = `
+                            <div class="subject-card bg-gray-800 rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all" data-id="${subject.id}">
+                                <h3 class="text-xl font-semibold text-gray-100 mb-3">${subject.name}</h3>
+                                <div class="w-full bg-gray-700 rounded-full h-4 overflow-hidden">
+                                    <div class="bg-blue-600 h-4 rounded-full transition-all duration-300" style="width: ${subject.progress}%"></div>
+                                </div>
+                                <div class="flex justify-between items-center mt-3">
+                                    <span class="text-sm font-medium text-gray-300">${subject.progress.toFixed(0)}% Complete</span>
+                                    <span class="text-xs text-gray-400">${subject.chapters.filter(c => c.completed).length} / ${subject.chapters.length} chapters</span>
+                                </div>
+                                ${targetDateStr}
+                            </div>
+                        `;
+                        this.subjectGrid.innerHTML += cardHtml;
+                    });
+
+                    const overallAvg = totalProgress / this.subjectsData.length;
+                    this.overallProgressBar.style.width = `${overallAvg.toFixed(0)}%`;
+                    this.overallProgressBar.textContent = `${overallAvg.toFixed(0)}%`;
+                },
+
+                /**
+                 * Calculates and updates the progress for a single subject.
+                 */
+                calculateSubjectProgress(subject) {
+                    if (!subject || !subject.chapters || subject.chapters.length === 0) {
+                        if(subject) subject.progress = 0;
+                        return;
+                    }
+                    const completedChapters = subject.chapters.filter(c => c.completed).length;
+                    subject.progress = (completedChapters / subject.chapters.length) * 100;
+                },
+
+                /**
+                 * Opens the modal for a specific subject.
+                 */
+                openModal(subjectId) {
+                    this.currentSubjectId = subjectId;
+                    const subject = this.subjectsData.find(s => s.id === subjectId);
+                    if (!subject) return;
+
+                    this.modalSubjectName.textContent = subject.name;
+                    this.targetDateInput.value = subject.targetDate;
+                    
+                    this.renderChapterList(subject);
+                    
+                    this.modal.style.display = 'flex';
+                },
+
+                /**
+                 * Renders the list of chapters inside the modal.
+                 */
+                renderChapterList(subject) {
+                    this.chapterList.innerHTML = '';
+                    subject.chapters.forEach(chapter => {
+                        const checked = chapter.completed ? 'checked' : '';
+                        const labelClass = chapter.completed ? 'line-through text-gray-500' : 'text-gray-300';
+                        const itemHtml = `
+                            <div class="flex items-center bg-gray-900 p-4 rounded-lg">
+                                <input id="chapter-${chapter.id}" data-chapter-id="${chapter.id}" type="checkbox" ${checked} class="form-checkbox h-5 w-5 text-blue-500 bg-gray-700 border-gray-600 rounded focus:ring-blue-600 focus:ring-2">
+                                <label for="chapter-${chapter.id}" class="ml-3 block text-md ${labelClass} transition-all">
+                                    ${chapter.name}
+                                </label>
+                            </div>
+                        `;
+                        this.chapterList.innerHTML += itemHtml;
+                    });
+                },
+
+                /**
+                 * Toggles the 'completed' status of a chapter.
+                 */
+                toggleChapterStatus(chapterId) {
+                    const subject = this.subjectsData.find(s => s.id === this.currentSubjectId);
+                    if (!subject) return;
+
+                    const chapter = subject.chapters.find(c => c.id === chapterId);
+                    if (chapter) {
+                        chapter.completed = !chapter.completed;
+                    }
+                    // Re-render chapter list to update styling
+                    this.renderChapterList(subject);
+                },
+
+                /**
+                 * Saves modal data (target date) and closes the modal.
+                 */
+                saveAndCloseModal() {
+                    const subject = this.subjectsData.find(s => s.id === this.currentSubjectId);
+                    if (subject) {
+                        subject.targetDate = this.targetDateInput.value;
+                    }
+                    
+                    this.calculateSubjectProgress(subject);
+                    this.saveData();
+                    this.renderDashboard();
+                    this.closeModal();
+                },
+
+                /**
+                 * Closes the modal.
+                 */
+                closeModal() {
+                    this.modal.style.display = 'none';
+                    this.currentSubjectId = null;
+                },
+
+                /**
+                 * Formats a date string (YYYY-MM-DD) into a more readable format.
+                 */
+                formatDate(dateString) {
+                    if (!dateString) return '';
+                    const date = new Date(dateString + 'T00:00:00'); // Fix for timezone issues
+                    return date.toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                    });
+                }
+            };
+
+            // Start the application
+            app.init();
+        });
+    </script>
+
+</body>
+</html>
